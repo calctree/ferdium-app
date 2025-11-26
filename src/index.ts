@@ -266,11 +266,25 @@ const createWindow = () => {
         // Parse window features to extract dimensions if provided
         let width = 800;
         let height = 600;
+        const MIN_DIMENSION = 100;
+        const MAX_DIMENSION = 2000;
         if (features) {
           const widthMatch = /width=(\d+)/i.exec(features);
           const heightMatch = /height=(\d+)/i.exec(features);
-          if (widthMatch) width = Number.parseInt(widthMatch[1], 10);
-          if (heightMatch) height = Number.parseInt(heightMatch[1], 10);
+          if (widthMatch) {
+            const parsedWidth = Number.parseInt(widthMatch[1], 10);
+            width = Math.max(
+              MIN_DIMENSION,
+              Math.min(MAX_DIMENSION, parsedWidth),
+            );
+          }
+          if (heightMatch) {
+            const parsedHeight = Number.parseInt(heightMatch[1], 10);
+            height = Math.max(
+              MIN_DIMENSION,
+              Math.min(MAX_DIMENSION, parsedHeight),
+            );
+          }
         }
 
         // Create a new BrowserWindow for the popup
