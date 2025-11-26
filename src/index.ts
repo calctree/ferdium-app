@@ -288,6 +288,9 @@ const createWindow = () => {
         }
 
         // Create a new BrowserWindow for the popup
+        // Note: For about:blank popups (like Slack huddles), we need to allow
+        // the opener window to write content to the popup via JavaScript.
+        // We match the pattern used by open-browser-window handler.
         return {
           action: 'allow',
           overrideBrowserWindowOptions: {
@@ -295,9 +298,8 @@ const createWindow = () => {
             height,
             webPreferences: {
               session: contents.session,
-              nodeIntegration: false,
-              contextIsolation: true,
-              webSecurity: true,
+              // Use minimal webPreferences to allow proper window.open behavior
+              // contextIsolation and sandbox default to false for proper opener access
             },
           },
         };
