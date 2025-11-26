@@ -299,11 +299,10 @@ const createWindow = () => {
             webPreferences: {
               session: contents.session,
               // Critical settings for window.open popups to work:
-              nativeWindowOpen: true, // Maintain native window.open behavior
               contextIsolation: false, // Allow opener to access popup's window object
               nodeIntegration: false, // Keep secure - no Node.js access in popup
               sandbox: false, // Required for proper opener/popup communication
-              webSecurity: false, // Disable web security to allow cross-origin access (matches webview)
+              webSecurity: false, // Disable web security for cross-origin (matches webview setting)
             },
           },
         };
