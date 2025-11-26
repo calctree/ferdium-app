@@ -257,9 +257,25 @@ const createWindow = () => {
   app.on('web-contents-created', (_e, contents) => {
     if (contents.getType() === 'webview') {
       enableWebContents(contents);
-      contents.setWindowOpenHandler(({ url }) => {
-        openExternalUrl(url);
-        return { action: 'deny' };
+      contents.setWindowOpenHandler(({ url, frameName, features }) => {
+        // Check if this is a popup that should be opened in a new window
+        // (e.g., Slack huddles, video calls, etc.)
+        // Allow popups to be created as new BrowserWindows instead of opening externally
+        debug('webview window.open called', { url, frameName, features });
+
+        // Create a new BrowserWindow for the popup
+        return {
+          action: 'allow',
+          overrideBrowserWindowOptions: {
+            width: 800,
+            height: 600,
+            webPreferences: {
+              session: contents.session,
+              nodeIntegration: false,
+              contextIsolation: true,
+            },
+          },
+        };
       });
 
       // Handle will download event from main process (prevent download dialog)
