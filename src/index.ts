@@ -263,16 +263,27 @@ const createWindow = () => {
         // Allow popups to be created as new BrowserWindows instead of opening externally
         debug('webview window.open called', { url, frameName, features });
 
+        // Parse window features to extract dimensions if provided
+        let width = 800;
+        let height = 600;
+        if (features) {
+          const widthMatch = /width=(\d+)/i.exec(features);
+          const heightMatch = /height=(\d+)/i.exec(features);
+          if (widthMatch) width = Number.parseInt(widthMatch[1], 10);
+          if (heightMatch) height = Number.parseInt(heightMatch[1], 10);
+        }
+
         // Create a new BrowserWindow for the popup
         return {
           action: 'allow',
           overrideBrowserWindowOptions: {
-            width: 800,
-            height: 600,
+            width,
+            height,
             webPreferences: {
               session: contents.session,
               nodeIntegration: false,
               contextIsolation: true,
+              webSecurity: true,
             },
           },
         };
