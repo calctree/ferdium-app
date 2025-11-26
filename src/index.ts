@@ -257,9 +257,55 @@ const createWindow = () => {
   app.on('web-contents-created', (_e, contents) => {
     if (contents.getType() === 'webview') {
       enableWebContents(contents);
-      contents.setWindowOpenHandler(({ url }) => {
-        openExternalUrl(url);
-        return { action: 'deny' };
+      contents.setWindowOpenHandler(({ url, frameName, features }) => {
+        // Check if this is a popup that should be opened in a new window
+        // (e.g., Slack huddles, video calls, etc.)
+        // Allow popups to be created as new BrowserWindows instead of opening externally
+        debug('webview window.open called', { url, frameName, features });
+
+        // Parse window features to extract dimensions if provided
+        let width = 800;
+        let height = 600;
+        const MIN_DIMENSION = 100;
+        const MAX_DIMENSION = 2000;
+        if (features) {
+          const widthMatch = /width=(\d+)/i.exec(features);
+          const heightMatch = /height=(\d+)/i.exec(features);
+          if (widthMatch) {
+            const parsedWidth = Number.parseInt(widthMatch[1], 10);
+            width = Math.max(
+              MIN_DIMENSION,
+              Math.min(MAX_DIMENSION, parsedWidth),
+            );
+          }
+          if (heightMatch) {
+            const parsedHeight = Number.parseInt(heightMatch[1], 10);
+            height = Math.max(
+              MIN_DIMENSION,
+              Math.min(MAX_DIMENSION, parsedHeight),
+            );
+          }
+        }
+
+        // Create a new BrowserWindow for the popup
+        // Note: For about:blank popups (like Slack huddles), the opener window
+        // needs to write content to the popup via JavaScript. With nativeWindowOpen,
+        // we must explicitly configure webPreferences to maintain the opener relationship.
+        return {
+          action: 'allow',
+          overrideBrowserWindowOptions: {
+            width,
+            height,
+            webPreferences: {
+              session: contents.session,
+              // Critical settings for window.open popups to work:
+              contextIsolation: false, // Allow opener to access popup's window object
+              nodeIntegration: false, // Keep secure - no Node.js access in popup
+              sandbox: false, // Required for proper opener/popup communication
+              webSecurity: false, // Disable web security for cross-origin (matches webview setting)
+            },
+          },
+        };
       });
 
       // Handle will download event from main process (prevent download dialog)
